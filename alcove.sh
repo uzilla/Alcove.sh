@@ -1,5 +1,5 @@
 #!/system/bin/sh
-#
+
 # MIT License
 #
 # Copyright (c) 2018-2019 urain39 & Kyono
@@ -150,7 +150,7 @@ if [ -d /alcove-hooks ]; then
 
   print_msg "Starting...\n"
   for s in /tmp/.alcove/alcove-hooks/*; do
-    if [ ! -f \${s} ]; then
+    if [ ! -f \${s} ] || [ ! -x \${s} ]; then
       continue
     fi
 
@@ -168,7 +168,7 @@ if [ -d /alcove-hooks ]; then
 
   print_msg "Stopping...\n"
   ls /tmp/.alcove/alcove-hooks/* | sort -r | while read s; do
-    if [ ! -f \${s} ]; then
+    if [ ! -f \${s} ] || [ ! -x \${s} ]; then
       continue
     fi
 
@@ -192,6 +192,53 @@ INIT_SCRIPT
 
   chmod 755 ${BOOT_DIR}
   chmod 750 ${BOOT_DIR}/init.sh
+
+  # alcove binds
+  cat > ${BOOT_DIR}/alcove.binds <<ALCOVE_BINDS
+# Syntax:
+#   source_dir  newroot_dir
+#   Use '#' at begin of a line to comment it.
+
+# Example:
+
+# sdcard
+/sdcard  /mnt/intsd
+ALCOVE_BINDS
+
+  chmod 644 ${BOOT_DIR}/alcove.binds
+
+  # mount point
+  mkdir -p ${BOOT_DIR}/mnt/intsd
+  mkdir -p ${BOOT_DIR}/mnt/extsd
+
+  chmod 755 ${BOOT_DIR}/mnt/intsd
+  chmod 755 ${BOOT_DIR}/mnt/extsd
+
+  # alcove hooks
+  mkdir -p ${BOOT_DIR}/alcove-hooks
+  cat > ${BOOT_DIR}/alcove-hooks/00-alcover <<00_ALCOVER
+#! /bin/sh
+
+# Filename: /alcove-hooks/00-alcover
+
+NAME="alcover"
+
+start() { :; }
+
+stop() { :; }
+
+case "\${1}" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+esac
+00_ALCOVER
+
+  chmod 755 ${BOOT_DIR}/alcove-hooks
+  chmod 755 ${BOOT_DIR}/alcove-hooks/00-alcover
 }
 
 alcove_mount()
